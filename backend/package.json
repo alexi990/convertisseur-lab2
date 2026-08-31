@@ -1,0 +1,15 @@
+{
+  "name": "convertisseur-backend",
+  "version": "1.0.0",
+  "description": "API de conversion d'unites (Node.js / Express)",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,166 @@
+import { useMemo, useState } from 'react';
+import Button from '@mui/material/Button';
+import CardContent from '@mui/material/CardContent';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import { convert } from '../api.js';
+
+export default function ConverterCard({ categories }) {
+  const [categoryKey, setCategoryKey] = useState(categories[0].key);
+  const category = useMemo(
+    () => categories.find((c) => c.key === categoryKey),
+    [categories, categoryKey],
+  );
+
+  const [fromUnit, setFromUnit] = useState(category.units[0].key);
+  const [toUnit, setToUnit] = useState(
+    category.units[1] ? category.units[1].key : category.units[0].key,
+  );
+  const [value, setValue] = useState('1');
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  function handleCategoryChange(event) {
+    const newKey = event.target.value;
+    const newCategory = categories.find((c) => c.key === newKey);
+    setCategoryKey(newKey);
+    setFromUnit(newCategory.units[0].key);
+    setToUnit(
+      newCategory.units[1] ? newCategory.units[1].key : newCategory.units[0].key,
+    );
+    setResult(null);
+    setError(null);
+  }
+
+  function handleSwap() {
+    setFromUnit(toUnit);
+    setToUnit(fromUnit);
+    setResult(null);
+    setError(null);
+  }
+
+  async function handleConvert(event) {
+    event.preventDefault();
+    setError(null);
+    try {
+      const data = await convert({
+        category: categoryKey,
+        from: fromUnit,
+        to: toUnit,
+        value,
+      });
+      setResult(data.result);
+    } catch (err) {
+      setResult(null);
+      setError(err.message);
+    }
+  }
+
+  const fromLabel = category.units.find((u) => u.key === fromUnit)?.label ?? '';
+  const toLabel = category.units.find((u) => u.key === toUnit)?.label ?? '';
+
+  return (
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
+      <CardContent component="form" onSubmit={handleConvert} sx={{ p: 0 }}>
+        <Stack spacing={3}>
+          <TextField
+            select
+            label="Categorie"
+            value={categoryKey}
+            onChange={handleCategoryChange}
+            fullWidth
+          >
+            {categories.map((c) => (
+              <MenuItem key={c.key} value={c.key}>
+                {c.label}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Valeur a convertir"
+            type="number"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            fullWidth
+            inputProps={{ step: 'any' }}
+          />
+
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems="center"
+          >
+            <TextField
+              select
+              label="De"
+              value={fromUnit}
+              onChange={(e) => {
+                setFromUnit(e.target.value);
+                setResult(null);
+              }}
+              fullWidth
+            >
+              {category.units.map((u) => (
+                <MenuItem key={u.key} value={u.key}>
+                  {u.label}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <IconButton
+              onClick={handleSwap}
+              color="primary"
+              aria-label="Inverser les unites"
+            >
+              <SwapHorizIcon />
+            </IconButton>
+
+            <TextField
+              select
+              label="Vers"
+              value={toUnit}
+              onChange={(e) => {
+                setToUnit(e.target.value);
+                setResult(null);
+              }}
+              fullWidth
+            >
+              {category.units.map((u) => (
+                <MenuItem key={u.key} value={u.key}>
+                  {u.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
+
+          <Button type="submit" variant="contained" size="large">
+            Convertir
+          </Button>
+
+          {result !== null && !error && (
+            <Alert severity="success" icon={false}>
+              <Typography variant="h6" component="p">
+                {value} {fromLabel} = {formatResult(result)} {toLabel}
+              </Typography>
+            </Alert>
+          )}
+
+          {error && <Alert severity="error">{error}</Alert>}
+        </Stack>
+      </CardContent>
+    </Paper>
+  );
+}
+
+function formatResult(n) {
+  if (!Number.isFinite(n)) return String(n);
+  // Affichage lisible : jusqu'a 6 decimales significatives, sans zeros inutiles.
+  return Number(n.toPrecision(8)).toString();
+}
