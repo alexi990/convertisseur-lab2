@@ -8,8 +8,15 @@ import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
+import Divider from '@mui/material/Divider';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Box from '@mui/material/Box';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { convert } from '../api.js';
+
+const MAX_HISTORIQUE = 5;
 
 export default function ConverterCard({ categories }) {
   const [categoryKey, setCategoryKey] = useState(categories[0].key);
@@ -25,6 +32,7 @@ export default function ConverterCard({ categories }) {
   const [value, setValue] = useState('1');
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [historique, setHistorique] = useState([]);
 
   function handleCategoryChange(event) {
     const newKey = event.target.value;
@@ -56,10 +64,20 @@ export default function ConverterCard({ categories }) {
         value,
       });
       setResult(data.result);
+
+      const ligne = `${data.value} ${fromLabel} = ${formatResult(data.result)} ${toLabel}`;
+      setHistorique((prev) => [
+        { id: Date.now(), texte: ligne },
+        ...prev,
+      ].slice(0, MAX_HISTORIQUE));
     } catch (err) {
       setResult(null);
       setError(err.message);
     }
+  }
+
+  function handleClearHistorique() {
+    setHistorique([]);
   }
 
   const fromLabel = category.units.find((u) => u.key === fromUnit)?.label ?? '';
@@ -153,6 +171,31 @@ export default function ConverterCard({ categories }) {
           )}
 
           {error && <Alert severity="error">{error}</Alert>}
+
+          {historique.length > 0 && (
+            <Box>
+              <Divider sx={{ mb: 1 }} />
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="subtitle2" color="text.secondary">
+                  Historique ({historique.length})
+                </Typography>
+                <Button size="small" onClick={handleClearHistorique}>
+                  Effacer
+                </Button>
+              </Stack>
+              <List dense>
+                {historique.map((h) => (
+                  <ListItem key={h.id} disableGutters>
+                    <ListItemText primary={h.texte} />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          )}
         </Stack>
       </CardContent>
     </Paper>
