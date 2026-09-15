@@ -1,12 +1,23 @@
 # Convertisseur d'unites
 
 Application de conversion d'unites developpee dans le cadre du **Laboratoire 02 -
-Exploration de nouvelles technologies**.
+Exploration de nouvelles technologies**, puis reprise en equipe de deux au
+**Laboratoire 03** pour pratiquer Git, GitHub et le travail collaboratif
+(branches, pull requests, revue de code).
 
 - **Backend** : Node.js + Express (API REST)
 - **Frontend** : React (Vite) + Material UI
 
-Categories supportees : longueur, volume, masse et temperature.
+Categories supportees : longueur, volume, masse, temperature et vitesse.
+
+## Fonctionnalites ajoutees au Laboratoire 03
+
+- **Validation des donnees** : une valeur vide ou negative est refusee (sauf
+  pour la temperature, ou le negatif est valide). L'erreur s'affiche en
+  direct sous le champ et le bouton Convertir se desactive tant que la
+  valeur est invalide.
+- **Categorie vitesse** : conversion entre metre par seconde (m/s),
+  kilometre par heure (km/h), mille par heure (mph) et noeud (kn).
 
 ## Prerequis
 
