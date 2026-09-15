@@ -24,8 +24,8 @@ export default function App() {
           Convertisseur d'unites
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Longueur, volume, masse et temperature. Backend Node.js + frontend
-          React / Material UI.
+          Longueur, volume, masse, temperature et vitesse. Backend Node.js +
+          frontend React / Material UI.
         </Typography>
       </Box>
 

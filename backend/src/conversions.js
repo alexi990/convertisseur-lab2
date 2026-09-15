@@ -65,6 +65,20 @@ const categories = {
       kelvin: { label: 'Kelvin (K)' },
     },
   },
+
+  vitesse: {
+    label: 'Vitesse',
+    base: 'metreParSeconde',
+    units: {
+      metreParSeconde: { label: 'Metre par seconde (m/s)', factor: 1 },
+      // 1 km/h = 1000 m / 3600 s
+      kilometreParHeure: { label: 'Kilometre par heure (km/h)', factor: 1 / 3.6 },
+      // 1 mph = 1609.344 m (1 mille terrestre) / 3600 s
+      milleParHeure: { label: 'Mille par heure (mph)', factor: 0.44704 },
+      // 1 noeud = 1852 m (1 mille marin) / 3600 s
+      noeud: { label: 'Noeud (kn)', factor: 0.514444444 },
+    },
+  },
 };
 
 function toCelsius(value, unit) {
