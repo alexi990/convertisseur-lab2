@@ -108,9 +108,22 @@ function convert({ category, from, to, value }) {
     throw new Error(`Unite d'arrivee inconnue pour ${category} : ${to}`);
   }
 
+  if (typeof value === 'string' && value.trim() === '') {
+    throw new Error('La valeur a convertir ne peut pas etre vide.');
+  }
+
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) {
     throw new Error(`La valeur a convertir doit etre un nombre : ${value}`);
+  }
+
+  // Longueur, volume et masse sont des grandeurs physiques qui ne peuvent
+  // pas etre negatives. La temperature est exclue (Celsius/Fahrenheit
+  // negatifs sont valides).
+  if (category !== 'temperature' && numericValue < 0) {
+    throw new Error(
+      'La valeur a convertir doit etre positive ou nulle pour cette categorie.',
+    );
   }
 
   if (category === 'temperature') {

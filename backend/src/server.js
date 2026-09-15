@@ -24,7 +24,13 @@ app.get('/api/categories', (req, res) => {
 app.post('/api/convert', (req, res) => {
   const { category, from, to, value } = req.body || {};
 
-  if (category == null || from == null || to == null || value == null) {
+  if (
+    category == null ||
+    from == null ||
+    to == null ||
+    value == null ||
+    value === ''
+  ) {
     return res.status(400).json({
       error: 'Les champs category, from, to et value sont obligatoires.',
     });

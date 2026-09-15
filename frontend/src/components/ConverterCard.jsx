@@ -34,6 +34,18 @@ export default function ConverterCard({ categories }) {
   const [error, setError] = useState(null);
   const [historique, setHistorique] = useState([]);
 
+  // Validation cote client : on evite un aller-retour inutile vers l'API
+  // pour des erreurs evidentes (champ vide, valeur negative pour une
+  // grandeur qui ne peut pas etre negative).
+  const valeurVide = value.trim() === '';
+  const valeurNegative =
+    categoryKey !== 'temperature' && !valeurVide && Number(value) < 0;
+  const inputError = valeurVide
+    ? 'La valeur ne peut pas etre vide.'
+    : valeurNegative
+      ? 'La valeur doit etre positive ou nulle pour cette categorie.'
+      : null;
+
   function handleCategoryChange(event) {
     const newKey = event.target.value;
     const newCategory = categories.find((c) => c.key === newKey);
@@ -56,6 +68,13 @@ export default function ConverterCard({ categories }) {
   async function handleConvert(event) {
     event.preventDefault();
     setError(null);
+
+    if (inputError) {
+      setResult(null);
+      setError(inputError);
+      return;
+    }
+
     try {
       const data = await convert({
         category: categoryKey,
@@ -108,6 +127,8 @@ export default function ConverterCard({ categories }) {
             onChange={(e) => setValue(e.target.value)}
             fullWidth
             inputProps={{ step: 'any' }}
+            error={Boolean(inputError)}
+            helperText={inputError ?? ' '}
           />
 
           <Stack
@@ -158,7 +179,12 @@ export default function ConverterCard({ categories }) {
             </TextField>
           </Stack>
 
-          <Button type="submit" variant="contained" size="large">
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={Boolean(inputError)}
+          >
             Convertir
           </Button>
 
