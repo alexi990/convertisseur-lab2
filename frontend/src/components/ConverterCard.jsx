@@ -36,10 +36,11 @@ export default function ConverterCard({ categories }) {
 
   // Validation cote client : on evite un aller-retour inutile vers l'API
   // pour des erreurs evidentes (champ vide, valeur negative pour une
-  // grandeur qui ne peut pas etre negative).
+  // grandeur qui ne peut pas etre negative). allowNegative vient de l'API
+  // (une seule source de verite avec le backend, pas de duplication de regle).
   const valeurVide = value.trim() === '';
   const valeurNegative =
-    categoryKey !== 'temperature' && !valeurVide && Number(value) < 0;
+    !category.allowNegative && !valeurVide && Number(value) < 0;
   const inputError = valeurVide
     ? 'La valeur ne peut pas etre vide.'
     : valeurNegative

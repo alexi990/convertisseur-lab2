@@ -58,6 +58,7 @@ const categories = {
   temperature: {
     label: 'Temperature',
     base: 'celsius',
+    allowNegative: true, // seule categorie ou le negatif a un sens (ex. -5 C)
     units: {
       celsius: { label: 'Celsius (C)' },
       fahrenheit: { label: 'Fahrenheit (F)' },
@@ -117,10 +118,11 @@ function convert({ category, from, to, value }) {
     throw new Error(`La valeur a convertir doit etre un nombre : ${value}`);
   }
 
-  // Longueur, volume et masse sont des grandeurs physiques qui ne peuvent
-  // pas etre negatives. La temperature est exclue (Celsius/Fahrenheit
-  // negatifs sont valides).
-  if (category !== 'temperature' && numericValue < 0) {
+  // La regle "negatif interdit" est portee par chaque categorie
+  // (allowNegative) plutot que codee en dur ici, pour eviter de la dupliquer
+  // avec le frontend si une nouvelle categorie a besoin d'un comportement
+  // different.
+  if (!cat.allowNegative && numericValue < 0) {
     throw new Error(
       'La valeur a convertir doit etre positive ou nulle pour cette categorie.',
     );
@@ -144,6 +146,7 @@ function listCategories() {
     key,
     label: cat.label,
     base: cat.base,
+    allowNegative: Boolean(cat.allowNegative),
     units: Object.entries(cat.units).map(([unitKey, unit]) => ({
       key: unitKey,
       label: unit.label,
