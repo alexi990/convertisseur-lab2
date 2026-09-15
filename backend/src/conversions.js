@@ -64,6 +64,17 @@ const categories = {
       kelvin: { label: 'Kelvin (K)' },
     },
   },
+
+  vitesse: {
+    label: 'Vitesse',
+    base: 'metreParSeconde',
+    units: {
+      metreParSeconde: { label: 'Metre par seconde (m/s)', factor: 1 },
+      kilometreParHeure: { label: 'Kilometre par heure (km/h)', factor: 1 / 3.6 },
+      milleParHeure: { label: 'Mille par heure (mph)', factor: 0.44704 },
+      noeud: { label: 'Noeud (kn)', factor: 0.514444444 },
+    },
+  },
 };
 
 function toCelsius(value, unit) {
