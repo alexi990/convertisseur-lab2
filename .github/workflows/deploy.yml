@@ -1,0 +1,77 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Backend install and test
+        working-directory: backend
+        run: |
+          npm ci
+          npm test
+
+      - name: Frontend install and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$SSH_HOST" > /tmp/hostkey
+          if [ ! -s /tmp/hostkey ]; then
+            echo "Impossible de recuperer la cle hote de la VM, deploiement annule"
+            exit 1
+          fi
+          cat /tmp/hostkey >> ~/.ssh/known_hosts
+
+      - name: Upload files with rsync
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          rsync -az --delete --exclude node_modules \
+            -e "ssh -i ~/.ssh/id_deploy" \
+            backend/ "$SSH_USER@$SSH_HOST:/var/www/ziboune/backend/"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_deploy" \
+            frontend/dist/ "$SSH_USER@$SSH_HOST:/var/www/ziboune/frontend/dist/"
+
+      - name: Install prod dependencies and restart service
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
+            "cd /var/www/ziboune/backend && npm ci --omit=dev && sudo systemctl restart ziboune"
+
+      - name: Health check
+        run: |
+          echo "Verification de https://ziboune.com/api/health"
+          for essai in 1 2 3 4 5 6; do
+            if curl -fsS https://ziboune.com/api/health; then
+              echo
+              echo "Deploiement reussi"
+              exit 0
+            fi
+            echo "Tentative $essai sans reponse, nouvel essai dans 5 s"
+            sleep 5
+          done
+          echo "Le service ne repond pas apres 6 tentatives, deploiement en echec"
+          exit 1
