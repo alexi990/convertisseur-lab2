@@ -20,26 +20,27 @@ jobs:
           npm ci
           npm test
 
-      - name: Frontend install and build
+      - name: Frontend install, test and build
         working-directory: frontend
         run: |
           npm ci
+          npm test
           npm run build
 
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -H "$SSH_HOST" > /tmp/hostkey
-          if [ ! -s /tmp/hostkey ]; then
-            echo "Impossible de recuperer la cle hote de la VM, deploiement annule"
+          # Cle hote epinglee dans un secret : si la VM presente une autre cle, ssh refuse (anti-MITM).
+          if [ -z "$SSH_KNOWN_HOSTS" ]; then
+            echo "Secret SSH_KNOWN_HOSTS manquant, deploiement annule"
             exit 1
           fi
-          cat /tmp/hostkey >> ~/.ssh/known_hosts
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
 
       - name: Upload files with rsync
         env:
