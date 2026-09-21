@@ -10,9 +10,15 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
+// Journalisation : date ISO, methode et URL de chaque requete.
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Verification de sante (utile pour les tests et le debogage).
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', uptime: Math.round(process.uptime()) });
 });
 
 // Liste des categories et unites disponibles.
