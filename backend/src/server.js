@@ -7,14 +7,22 @@ const { convert, listCategories } = require('./conversions');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
-app.use(express.json());
-
-// Journalisation : date ISO, methode et URL de chaque requete.
+// Journalisation : date ISO, methode, URL, code de statut et duree.
+// Enregistree avant express.json() pour que les requetes au corps invalide,
+// rejetees par le parseur, apparaissent elles aussi dans les logs.
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
+  const debut = Date.now();
+  res.on('finish', () => {
+    const duree = Date.now() - debut;
+    console.log(
+      `${new Date().toISOString()} ${req.method} ${req.originalUrl} ${res.statusCode} ${duree}ms`,
+    );
+  });
   next();
 });
+
+app.use(cors());
+app.use(express.json());
 
 // Verification de sante (utile pour les tests et le debogage).
 app.get('/api/health', (req, res) => {

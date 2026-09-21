@@ -34,7 +34,12 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$SSH_HOST" > /tmp/hostkey
+          if [ ! -s /tmp/hostkey ]; then
+            echo "Impossible de recuperer la cle hote de la VM, deploiement annule"
+            exit 1
+          fi
+          cat /tmp/hostkey >> ~/.ssh/known_hosts
 
       - name: Upload files with rsync
         env:
@@ -58,8 +63,15 @@ jobs:
 
       - name: Health check
         run: |
-          sleep 5
           echo "Verification de https://ziboune.com/api/health"
-          curl -fsS https://ziboune.com/api/health
-          echo
-          echo "Deploiement reussi"
+          for essai in 1 2 3 4 5 6; do
+            if curl -fsS https://ziboune.com/api/health; then
+              echo
+              echo "Deploiement reussi"
+              exit 0
+            fi
+            echo "Tentative $essai sans reponse, nouvel essai dans 5 s"
+            sleep 5
+          done
+          echo "Le service ne repond pas apres 6 tentatives, deploiement en echec"
+          exit 1
