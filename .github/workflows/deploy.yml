@@ -27,25 +27,39 @@ jobs:
           npm run build
 
       - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload files with rsync
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          SSH="ssh -i ~/.ssh/id_deploy"
-          TARGET="${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
-          rsync -az --delete --exclude node_modules -e "$SSH" backend/ "$TARGET:/var/www/ziboune/backend/"
-          rsync -az --delete -e "$SSH" frontend/dist/ "$TARGET:/var/www/ziboune/frontend/dist/"
+          rsync -az --delete --exclude node_modules \
+            -e "ssh -i ~/.ssh/id_deploy" \
+            backend/ "$SSH_USER@$SSH_HOST:/var/www/ziboune/backend/"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_deploy" \
+            frontend/dist/ "$SSH_USER@$SSH_HOST:/var/www/ziboune/frontend/dist/"
 
       - name: Install prod dependencies and restart service
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          ssh -i ~/.ssh/id_deploy "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
             "cd /var/www/ziboune/backend && npm ci --omit=dev && sudo systemctl restart ziboune"
 
       - name: Health check
         run: |
           sleep 5
+          echo "Verification de https://ziboune.com/api/health"
           curl -fsS https://ziboune.com/api/health
+          echo
+          echo "Deploiement reussi"
